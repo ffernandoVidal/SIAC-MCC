@@ -1,0 +1,37 @@
+name: Deploy SIAC
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Actualizar código
+        run: |
+          cd /home/siac/server/SIAC-MCC
+          git fetch origin
+          git reset --hard origin/main
+
+      - name: Limpiar despliegue anterior
+        run: |
+          docker ps -a --filter "name=siac" -q | xargs -r docker rm -f
+          docker ps -a --filter "ancestor=server_siac" -q | xargs -r docker rm -f
+          docker rmi -f server_siac || true
+
+      - name: Reconstruir y levantar contenedor
+        run: |
+          cd /home/siac/server
+          docker-compose up -d --build
+
+      - name: Esperar arranque
+        run: sleep 10
+
+      - name: Verificar despliegue
+        run: |
+          docker ps
+          curl -I http://localhost:3001
