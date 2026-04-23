@@ -7,16 +7,20 @@ import TercerosDocumentos from '../src/modules/accounting/TercerosDocumentos';
 import RegistroPolizas from '../src/modules/accounting/RegistroPolizas';
 import ValidacionesContables from '../src/modules/accounting/ValidacionesContables';
 import CierreContable from '../src/modules/accounting/CierreContable';
+import LibroDiarioPage from '../frontend/src/pages/contabilidad/LibroDiarioPage';
+// 🔌 EL ENCHUFE QUE FALTABA PARA EL MOTOR DE DATOS
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const iconosModulos = {
-  'Dashboard Principal': 'bi-house-door', 'Seguridad y acceso': 'bi-shield-lock', 'Usuarios': 'bi-people', 'Roles': 'bi-person-badge-fill', 'Asignar Roles': 'bi-key', 'Permisos': 'bi-lock', 'Bitácora': 'bi-journal-text', 'Configuración de empresa': 'bi-gear', 'Datos empresa': 'bi-building', 'Moneda': 'bi-currency-dollar', 'Zona horaria': 'bi-clock-history', 'Parámetros': 'bi-toggles2', 'Catálogos maestros': 'bi-list-ul', 'Tipos de cuenta': 'bi-wallet2', 'Tipos de póliza': 'bi-file-earmark-ruled', 'Estados': 'bi-signpost-split', 'Documentos': 'bi-file-earmark-text', 'Contabilidad': 'bi-calculator', 'Ejercicio fiscal y períodos': 'bi-calendar3', 'Catálogo de cuentas': 'bi-tree', 'Terceros y documentos fuente': 'bi-person-lines-fill', 'Registro de pólizas': 'bi-receipt', 'Validaciones contables': 'bi-patch-check', 'Cierre contable': 'bi-box-arrow-right', 'Auditoría completa': 'bi-search-heart', 'Consultas y reportes base': 'bi-bar-chart-line'
+  'Dashboard Principal': 'bi-house-door', 'Seguridad y acceso': 'bi-shield-lock', 'Usuarios': 'bi-people', 'Roles': 'bi-person-badge-fill', 'Asignar Roles': 'bi-key', 'Permisos': 'bi-lock', 'Bitácora': 'bi-journal-text', 'Configuración de empresa': 'bi-gear', 'Datos empresa': 'bi-building', 'Moneda': 'bi-currency-dollar', 'Zona horaria': 'bi-clock-history', 'Parámetros': 'bi-toggles2', 'Catálogos maestros': 'bi-list-ul', 'Tipos de cuenta': 'bi-wallet2', 'Tipos de póliza': 'bi-file-earmark-ruled', 'Estados': 'bi-signpost-split', 'Documentos': 'bi-file-earmark-text', 'Contabilidad': 'bi-calculator', 'Ejercicio fiscal y períodos': 'bi-calendar3', 'Catálogo de cuentas': 'bi-tree', 'Terceros y documentos fuente': 'bi-person-lines-fill', 'Registro de pólizas': 'bi-receipt', 'Validaciones contables': 'bi-patch-check', 'Cierre contable': 'bi-box-arrow-right', 'Auditoría completa': 'bi-search-heart', 'Consultas y reportes base': 'bi-bar-chart-line',
+  'Libro Diario': 'bi-book'
 };
 
 const modules = [
   { name: 'Seguridad y acceso', phase: 1, children: ['Usuarios', 'Roles', 'Asignar Roles', 'Permisos', 'Bitácora'] },
   { name: 'Configuración de empresa', phase: 1, children: ['Datos empresa', 'Moneda', 'Zona horaria', 'Parámetros'] },
   { name: 'Catálogos maestros', phase: 1, children: ['Tipos de cuenta', 'Tipos de póliza', 'Estados', 'Documentos'] },
-  { name: 'Contabilidad', phase: 2, children: ['Ejercicio fiscal y períodos', 'Catálogo de cuentas', 'Terceros y documentos fuente', 'Registro de pólizas', 'Validaciones contables', 'Cierre contable'] },
+  { name: 'Contabilidad', phase: 2, children: ['Ejercicio fiscal y períodos', 'Catálogo de cuentas', 'Terceros y documentos fuente', 'Registro de pólizas', 'Libro Diario', 'Validaciones contables', 'Cierre contable'] },
   { name: 'Auditoría completa', phase: 4, children: [] },
   { name: 'Consultas y reportes base', phase: 4, children: [] },
 ];
@@ -25,6 +29,7 @@ const mapaPermisos = {
   'Usuarios': 'USUARIO_VER', 'Roles': 'ROL_VER', 'Asignar Roles': 'ROL_ASIGNAR', 'Permisos': 'ROL_ASIGNAR', 'Bitácora': 'BITACORA_VER',
   'Datos empresa': 'EMPRESA_VER', 'Moneda': 'EMPRESA_VER', 'Zona horaria': 'EMPRESA_VER', 'Parámetros': 'EMPRESA_VER',
   'Tipos de cuenta': 'CUENTA_VER', 'Tipos de póliza': 'POLIZA_VER', 'Estados': 'POLIZA_VER', 'Documentos': 'DOCUMENTO_VER',
+  'Libro Diario': 'POLIZA_VER',
 };
 
 const StatCard = ({ title, value, icon, color }) => (
@@ -45,9 +50,11 @@ const dataGrafico = [
   { mes: 'Jun', ingresos: 8390, egresos: 3800 },
 ];
 
+// 🔌 CREAMOS EL PROVEEDOR DE DATOS PARA QUE FER NO SE QUEJE
+const queryClient = new QueryClient();
+
 export default function Home() {
   const router = useRouter();
-  // === TRUCO ANTI ERROR DE HIDRATACIÓN ===
   const [isMounted, setIsMounted] = useState(false);
 
   const [selected, setSelected] = useState('Dashboard Principal');
@@ -93,7 +100,7 @@ export default function Home() {
   const [modulosAbiertos, setModulosAbiertos] = useState({});
 
   useEffect(() => {
-    setIsMounted(true); // Le decimos que ya estamos listos en el navegador
+    setIsMounted(true);
     if (typeof window !== 'undefined') {
       const permisosGuardados = JSON.parse(localStorage.getItem('permisos') || '[]');
       const infoUsuario = JSON.parse(localStorage.getItem('usuario') || '{"nombre": "Usuario", "id_empresa": 1}');
@@ -129,7 +136,7 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (!isMounted) return; // Solo cargar si ya estamos listos
+    if (!isMounted) return; 
     if (selected === 'Dashboard Principal') cargarTerceros();
     if (selected === 'Usuarios') { cargarEmpresas(); cargarUsuarios(); setBusquedaUsuarios(''); } 
     if (selected === 'Roles') cargarRoles();
@@ -190,7 +197,6 @@ export default function Home() {
     return { ...m, children: childrenPermitidos };
   }).filter(m => m.children.length > 0);
 
-  // Si no está montado (cargando en el server), no renderizamos nada para evitar el error de hidratación
   if (!isMounted) return null;
 
   const renderContent = () => {
@@ -318,229 +324,233 @@ export default function Home() {
     if (selected === 'Registro de pólizas') return <RegistroPolizas idEmpresa={idMiEmpresa} mostrarToast={mostrarToast} />;
     if (selected === 'Validaciones contables') return <ValidacionesContables idEmpresa={idMiEmpresa} mostrarToast={mostrarToast} />;
     if (selected === 'Cierre contable') return <CierreContable idEmpresa={idMiEmpresa} mostrarToast={mostrarToast} />;
+    if (selected === 'Libro Diario') return <LibroDiarioPage idEmpresa={idMiEmpresa} mostrarToast={mostrarToast} />;
     
     return <div className="mt-4 ms-3"><h4 className="text-muted">Módulo en construcción: {selected}</h4></div>;
   };
 
+  // 🔌 Y AQUÍ ENVOLVEMOS TU APP PARA QUE EL MOTOR ENCIENDA
   return (
-    <div className="container-fluid p-0 var-bg-light-gray min-vh-100 transition-colors">
-      
-      {toast.visible && (
-        <div className={`toast-custom bg-${toast.tipo} text-white shadow-lg d-flex align-items-center`}>
-          <i className={`bi ${toast.tipo === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'} fs-4 me-3`}></i>
-          <span className="fw-medium">{toast.mensaje}</span>
-        </div>
-      )}
+    <QueryClientProvider client={queryClient}>
+      <div className="container-fluid p-0 var-bg-light-gray min-vh-100 transition-colors">
+        
+        {toast.visible && (
+          <div className={`toast-custom bg-${toast.tipo} text-white shadow-lg d-flex align-items-center`}>
+            <i className={`bi ${toast.tipo === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'} fs-4 me-3`}></i>
+            <span className="fw-medium">{toast.mensaje}</span>
+          </div>
+        )}
 
-      <header className="navbar navbar-expand var-bg-white sticky-top px-4 py-2 modern-header transition-colors">
-        <div className="container-fluid p-0">
-          <a className="navbar-brand d-flex align-items-center fw-bold var-text-dark fs-4" href="#">
-            <img src="/logo.png" alt="Logo" width="40" height="40" className="me-3 rounded-2" onError={(e) => e.target.style.display='none'} />
-            <span>SIAC <span className="text-primary fw-medium small">/ Plataforma</span></span>
-          </a>
-          
-          <div className="ms-auto d-flex align-items-center">
-            <button className="btn btn-sm btn-light rounded-circle me-3 var-btn-light border-0" onClick={toggleDarkMode} style={{width: '35px', height: '35px'}} title="Alternar tema">
-              <i className={`bi ${darkMode ? 'bi-moon-stars-fill text-warning' : 'bi-sun-fill text-warning'} fs-5`}></i>
-            </button>
+        <header className="navbar navbar-expand var-bg-white sticky-top px-4 py-2 modern-header transition-colors">
+          <div className="container-fluid p-0">
+            <a className="navbar-brand d-flex align-items-center fw-bold var-text-dark fs-4" href="#">
+              <img src="/logo.png" alt="Logo" width="40" height="40" className="me-3 rounded-2" onError={(e) => e.target.style.display='none'} />
+              <span>SIAC <span className="text-primary fw-medium small">/ Plataforma</span></span>
+            </a>
+            
+            <div className="ms-auto d-flex align-items-center">
+              <button className="btn btn-sm btn-light rounded-circle me-3 var-btn-light border-0" onClick={toggleDarkMode} style={{width: '35px', height: '35px'}} title="Alternar tema">
+                <i className={`bi ${darkMode ? 'bi-moon-stars-fill text-warning' : 'bi-sun-fill text-warning'} fs-5`}></i>
+              </button>
 
-            <button className="btn btn-sm btn-outline-danger rounded-pill me-3 px-3 fw-bold" onClick={cerrarSesion} title="Cerrar sesión">
-              <i className="bi bi-box-arrow-right me-2"></i>
-              Cerrar sesión
-            </button>
+              <button className="btn btn-sm btn-outline-danger rounded-pill me-3 px-3 fw-bold" onClick={cerrarSesion} title="Cerrar sesión">
+                <i className="bi bi-box-arrow-right me-2"></i>
+                Cerrar sesión
+              </button>
 
-            <div className="d-flex align-items-center modern-user-panel var-bg-light rounded-pill px-2 py-1 border border-light-gray">
-              <span className="text-muted small px-3 border-end border-light-gray me-2 fw-medium">{idMiEmpresa === 1 ? 'SIAC SaaS' : empresas[0]?.nombre_comercial || 'Empresa'}</span>
-              <img src="/avatar.png" alt="U" width="35" height="35" className="rounded-circle border border-2 border-white shadow-sm" onError={(e) => e.target.src='https://via.placeholder.com/35?text=U'} />
-              <div className="ms-2 pe-2">
-                <strong className="var-text-dark d-block lh-1 fw-bold">@{nombreUsuarioLogueado}</strong>
-                <span className="text-success small fw-bold text-uppercase" style={{fontSize: '0.65rem'}}><i className="bi bi-circle-fill me-1" style={{fontSize: '0.5rem'}}></i>Online</span>
+              <div className="d-flex align-items-center modern-user-panel var-bg-light rounded-pill px-2 py-1 border border-light-gray">
+                <span className="text-muted small px-3 border-end border-light-gray me-2 fw-medium">{idMiEmpresa === 1 ? 'SIAC SaaS' : empresas[0]?.nombre_comercial || 'Empresa'}</span>
+                <img src="/avatar.png" alt="U" width="35" height="35" className="rounded-circle border border-2 border-white shadow-sm" onError={(e) => e.target.src='https://via.placeholder.com/35?text=U'} />
+                <div className="ms-2 pe-2">
+                  <strong className="var-text-dark d-block lh-1 fw-bold">@{nombreUsuarioLogueado}</strong>
+                  <span className="text-success small fw-bold text-uppercase" style={{fontSize: '0.65rem'}}><i className="bi bi-circle-fill me-1" style={{fontSize: '0.5rem'}}></i>Online</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className="row m-0">
-        <nav id="sidebar" className="col-md-3 col-lg-2 d-md-block var-bg-white sidebar collapse modern-sidebar transition-colors" style={{position: 'fixed', overflowY: 'auto'}}>
-          <div className="position-sticky pt-3 px-3">
-            <div className="d-flex align-items-center mb-4 px-2 pt-2 pb-3 border-bottom border-light-gray">
-               <img src="/brand-icon.png" alt="" width="30" height="30" className="me-2" onError={(e) => e.target.style.display='none'} />
-               <h5 className="mb-0 fw-bold var-text-dark">Contabilidad <span className="text-muted fw-normal">SaaS</span></h5>
+        <div className="row m-0">
+          <nav id="sidebar" className="col-md-3 col-lg-2 d-md-block var-bg-white sidebar collapse modern-sidebar transition-colors" style={{position: 'fixed', overflowY: 'auto'}}>
+            <div className="position-sticky pt-3 px-3">
+              <div className="d-flex align-items-center mb-4 px-2 pt-2 pb-3 border-bottom border-light-gray">
+                 <img src="/brand-icon.png" alt="" width="30" height="30" className="me-2" onError={(e) => e.target.style.display='none'} />
+                 <h5 className="mb-0 fw-bold var-text-dark">Contabilidad <span className="text-muted fw-normal">SaaS</span></h5>
+              </div>
+              <ul className="nav flex-column mt-2 g-2">
+                <li className="nav-item mb-2 mt-1 px-1 pb-2 border-bottom border-light-gray">
+                  <a href="#" className={`nav-link fs-6 rounded-3 d-flex align-items-center ${selected === 'Dashboard Principal' ? 'active-modern' : 'text-secondary-modern'}`} onClick={() => setSelected('Dashboard Principal')}>
+                    <i className={`bi ${iconosModulos['Dashboard Principal']} me-3 fs-5`}></i>Dashboard
+                  </a>
+                </li>
+                {modulosFiltrados.map((m) => {
+                  const abierto = !!modulosAbiertos[m.name];
+                  return (
+                    <li key={m.name} className="nav-item mb-2 menu-group-card">
+                      <button
+                        type="button"
+                        className={`menu-group-toggle w-100 ${abierto ? 'is-open' : ''}`}
+                        onClick={() => toggleModuloMenu(m.name)}
+                      >
+                        <span className="d-flex align-items-center">
+                          <i className={`bi ${iconosModulos[m.name] || 'bi-collection'} me-2`}></i>
+                          {m.name}
+                        </span>
+                        <i className={`bi ${abierto ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                      </button>
+
+                      {abierto && (
+                        <div className="menu-group-content mt-1">
+                          {m.children.map((c) => (
+                            <a key={c} href="#" className={`nav-link py-2 ms-1 rounded-3 small d-flex align-items-center transition-all ${selected === c ? 'active-modern' : 'text-secondary-modern'}`} onClick={() => setSelected(c)}>
+                              <i className={`bi ${iconosModulos[c] || 'bi-circle'} me-3`} style={{fontSize: selected === c ? '0.6rem' : '0.5rem', transition: 'all 0.2s'}}></i>{c}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
-            <ul className="nav flex-column mt-2 g-2">
-              <li className="nav-item mb-2 mt-1 px-1 pb-2 border-bottom border-light-gray">
-                <a href="#" className={`nav-link fs-6 rounded-3 d-flex align-items-center ${selected === 'Dashboard Principal' ? 'active-modern' : 'text-secondary-modern'}`} onClick={() => setSelected('Dashboard Principal')}>
-                  <i className={`bi ${iconosModulos['Dashboard Principal']} me-3 fs-5`}></i>Dashboard
-                </a>
-              </li>
-              {modulosFiltrados.map((m) => {
-                const abierto = !!modulosAbiertos[m.name];
-                return (
-                  <li key={m.name} className="nav-item mb-2 menu-group-card">
-                    <button
-                      type="button"
-                      className={`menu-group-toggle w-100 ${abierto ? 'is-open' : ''}`}
-                      onClick={() => toggleModuloMenu(m.name)}
-                    >
-                      <span className="d-flex align-items-center">
-                        <i className={`bi ${iconosModulos[m.name] || 'bi-collection'} me-2`}></i>
-                        {m.name}
-                      </span>
-                      <i className={`bi ${abierto ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
-                    </button>
+          </nav>
+          
+          <main className="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content-modern pb-5">
+            {renderContent()}
+          </main>
+        </div>
 
-                    {abierto && (
-                      <div className="menu-group-content mt-1">
-                        {m.children.map((c) => (
-                          <a key={c} href="#" className={`nav-link py-2 ms-1 rounded-3 small d-flex align-items-center transition-all ${selected === c ? 'active-modern' : 'text-secondary-modern'}`} onClick={() => setSelected(c)}>
-                            <i className={`bi ${iconosModulos[c] || 'bi-circle'} me-3`} style={{fontSize: selected === c ? '0.6rem' : '0.5rem', transition: 'all 0.2s'}}></i>{c}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </nav>
-        
-        <main className="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content-modern pb-5">
-          {renderContent()}
-        </main>
+        <style jsx global>{`
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+          
+          :root {
+            --bg-body: #F4F7FE;
+            --bg-card: #FFFFFF;
+            --text-main: #2B3674;
+            --border-color: #E0E5F2;
+            --bg-input: #FFFFFF;
+            --bg-table-header: #F7F9FC;
+            --bg-hover: #F4F7FE;
+            --bg-light-btn: #f8f9fa;
+          }
+
+          .dark-theme {
+            --bg-body: #0b0f19;
+            --bg-card: #111827;
+            --text-main: #e2e8f0;
+            --border-color: #1e293b;
+            --bg-input: #1e293b;
+            --bg-table-header: #0f172a;
+            --bg-hover: #1e293b;
+            --bg-light-btn: #1e293b;
+          }
+
+          body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); }
+          
+          .var-bg-light-gray { background-color: var(--bg-body) !important; }
+          .var-bg-white { background-color: var(--bg-card) !important; }
+          .var-text-dark { color: var(--text-main) !important; }
+          .border-light-gray { border-color: var(--border-color) !important; }
+          .table-light-gray { background-color: var(--bg-table-header) !important; border-bottom: 1px solid var(--border-color); }
+          .var-btn-light { background-color: var(--bg-light-btn); color: var(--text-main); }
+          .var-bg-light { background-color: var(--bg-light-btn) !important; }
+
+          .transition-colors { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+
+          .modern-header { box-shadow: 0 4px 12px 0 rgba(0,0,0,0.03); z-index: 1030; border: none; }
+          .modern-sidebar { height: calc(100vh - 73px); top: 73px; border-right: 1px solid var(--border-color); padding-bottom: 2rem; box-shadow: 4px 0 12px 0 rgba(0,0,0,0.01); }
+          .modern-sidebar::-webkit-scrollbar { width: 5px; }
+          .modern-sidebar::-webkit-scrollbar-thumb { background: var(--border-color); rounded: 5px; }
+          .main-content-modern { padding-top: 1.5rem; }
+          
+          .modern-sidebar .nav-link { color: #A3AED0; font-weight: 500; transition: all 0.2s ease; border-left: 4px solid transparent; }
+          .modern-sidebar .nav-link.text-secondary-modern:hover { color: var(--text-main); background-color: var(--bg-hover); transform: translateX(3px); }
+          .modern-sidebar .nav-link.active-modern { color: var(--text-main); font-weight: 700; border-left: 4px solid #4318FF; background-color: rgba(67, 24, 255, 0.05); }
+          .modern-sidebar .nav-link i { color: inherit; }
+          .text-muted-modern { color: #A3AED0; }
+          .menu-group-card { background: rgba(67, 24, 255, 0.03); border: 1px solid var(--border-color); border-radius: 14px; padding: 0.2rem; }
+          .menu-group-toggle {
+            border: none;
+            background: transparent;
+            color: #7f8db8;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 0.9rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+          }
+          .menu-group-toggle:hover, .menu-group-toggle.is-open {
+            background-color: rgba(67, 24, 255, 0.07);
+            color: var(--text-main);
+          }
+          .menu-group-content {
+            padding: 0.15rem 0.2rem 0.35rem;
+            animation: fadeIn 0.2s ease-in;
+          }
+          
+          .card { background-color: var(--bg-card); transition: background-color 0.3s ease; }
+          .rounded-4 { border-radius: 1rem !important; }
+          .shadow-sm { box-shadow: 0 10px 30px rgba(0,0,0,0.04) !important; }
+          .btn { border-radius: 0.75rem; padding: 0.6rem 1.5rem; transition: all 0.2s; }
+          .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+          .btn-sm { padding: 0.3rem 0.8rem; }
+          .rounded-pill { border-radius: 50rem !important; }
+          
+          .form-control, .form-select { 
+            border-radius: 0.75rem; border: 1px solid var(--border-color); padding: 0.75rem 1rem; 
+            color: var(--text-main); font-weight: 500; background-color: var(--bg-input); transition: all 0.2s; 
+          }
+          .form-control:focus, .form-select:focus { border-color: #4318FF; box-shadow: 0 0 0 0.25rem rgba(67, 24, 255, 0.1); }
+          .focus-none:focus { box-shadow: none !important; border-color: transparent !important; }
+          .focus-primary:focus { border-color: #4318FF !important; box-shadow: 0 0 0 0.25rem rgba(67, 24, 255, 0.1) !important; }
+          .focus-secondary:focus { border-color: #6c757d !important; box-shadow: 0 0 0 0.25rem rgba(108, 117, 125, 0.1) !important; }
+          .focus-info:focus { border-color: #0dcaf0 !important; box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.1) !important; }
+          
+          .form-label { font-weight: 600; color: var(--text-main); margin-bottom: 0.3rem; }
+          
+          .modern-table thead th { border: none; padding-top: 1rem; padding-bottom: 1rem; color: #A3AED0; }
+          .modern-table tbody tr { border-bottom: 1px solid var(--border-color); transition: all 0.2s; }
+          .modern-table tbody tr:hover { background-color: var(--bg-hover) !important; }
+          .modern-table tbody tr:last-child { border-bottom: none; }
+          .modern-table tbody td { padding-top: 1rem; padding-bottom: 1rem; color: var(--text-main); }
+          
+          .badge.rounded-pill { padding: 0.4em 0.8em; font-weight: 600; font-size: 0.75em; border: 1px solid transparent; }
+          .bg-light-success { background-color: rgba(5, 205, 153, 0.1) !important; color: #05CD99 !important; border-color: rgba(5, 205, 153, 0.2); }
+          .bg-light-warning { background-color: rgba(255, 168, 0, 0.1) !important; color: #FFA800 !important; border-color: rgba(255, 168, 0, 0.2); }
+          .bg-light-danger { background-color: rgba(238, 93, 80, 0.1) !important; color: #EE5D50 !important; border-color: rgba(238, 93, 80, 0.2); }
+          .bg-light-info { background-color: rgba(0, 184, 217, 0.1) !important; color: #00B8D9 !important; border-color: rgba(0, 184, 217, 0.2); }
+          .bg-light-primary { background-color: rgba(67, 24, 255, 0.1) !important; color: #4318FF !important; border-color: rgba(67, 24, 255, 0.2); }
+          
+          .icon-shape { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
+          .bg-light-teal { background-color: rgba(0, 128, 128, 0.1); color: #008080; }
+          .text-teal { color: #008080; }
+          
+          .sticky-top-custom { position: sticky; top: 100px; z-index: 10; }
+          .action-btn { opacity: 0.7; transition: all 0.2s; }
+          .modern-table tbody tr:hover .action-btn { opacity: 1; transform: scale(1.1); }
+          
+          .transition-hover { transition: all 0.3s ease; }
+          .transition-hover:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important; }
+          
+          .fade-in { animation: fadeIn 0.4s ease-in; }
+          @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+          
+          .toast-custom {
+            position: fixed; bottom: 30px; right: 30px; min-width: 280px; padding: 15px 25px; border-radius: 12px; z-index: 9999;
+            animation: slideInBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
+          }
+          @keyframes slideInBounce { 0% { transform: translateX(120%); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+
+          .dark-theme .recharts-cartesian-grid-line { stroke: #3a3f58; }
+          .dark-theme .recharts-text { fill: #A3AED0; }
+          .dark-theme input { color: #fff !important; }
+        `}</style>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
       </div>
-
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        :root {
-          --bg-body: #F4F7FE;
-          --bg-card: #FFFFFF;
-          --text-main: #2B3674;
-          --border-color: #E0E5F2;
-          --bg-input: #FFFFFF;
-          --bg-table-header: #F7F9FC;
-          --bg-hover: #F4F7FE;
-          --bg-light-btn: #f8f9fa;
-        }
-
-        .dark-theme {
-          --bg-body: #0b0f19;
-          --bg-card: #111827;
-          --text-main: #e2e8f0;
-          --border-color: #1e293b;
-          --bg-input: #1e293b;
-          --bg-table-header: #0f172a;
-          --bg-hover: #1e293b;
-          --bg-light-btn: #1e293b;
-        }
-
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); }
-        
-        .var-bg-light-gray { background-color: var(--bg-body) !important; }
-        .var-bg-white { background-color: var(--bg-card) !important; }
-        .var-text-dark { color: var(--text-main) !important; }
-        .border-light-gray { border-color: var(--border-color) !important; }
-        .table-light-gray { background-color: var(--bg-table-header) !important; border-bottom: 1px solid var(--border-color); }
-        .var-btn-light { background-color: var(--bg-light-btn); color: var(--text-main); }
-        .var-bg-light { background-color: var(--bg-light-btn) !important; }
-
-        .transition-colors { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
-
-        .modern-header { box-shadow: 0 4px 12px 0 rgba(0,0,0,0.03); z-index: 1030; border: none; }
-        .modern-sidebar { height: calc(100vh - 73px); top: 73px; border-right: 1px solid var(--border-color); padding-bottom: 2rem; box-shadow: 4px 0 12px 0 rgba(0,0,0,0.01); }
-        .modern-sidebar::-webkit-scrollbar { width: 5px; }
-        .modern-sidebar::-webkit-scrollbar-thumb { background: var(--border-color); rounded: 5px; }
-        .main-content-modern { padding-top: 1.5rem; }
-        
-        .modern-sidebar .nav-link { color: #A3AED0; font-weight: 500; transition: all 0.2s ease; border-left: 4px solid transparent; }
-        .modern-sidebar .nav-link.text-secondary-modern:hover { color: var(--text-main); background-color: var(--bg-hover); transform: translateX(3px); }
-        .modern-sidebar .nav-link.active-modern { color: var(--text-main); font-weight: 700; border-left: 4px solid #4318FF; background-color: rgba(67, 24, 255, 0.05); }
-        .modern-sidebar .nav-link i { color: inherit; }
-        .text-muted-modern { color: #A3AED0; }
-        .menu-group-card { background: rgba(67, 24, 255, 0.03); border: 1px solid var(--border-color); border-radius: 14px; padding: 0.2rem; }
-        .menu-group-toggle {
-          border: none;
-          background: transparent;
-          color: #7f8db8;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0.75rem 0.9rem;
-          font-size: 0.78rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          border-radius: 12px;
-          transition: all 0.2s ease;
-        }
-        .menu-group-toggle:hover, .menu-group-toggle.is-open {
-          background-color: rgba(67, 24, 255, 0.07);
-          color: var(--text-main);
-        }
-        .menu-group-content {
-          padding: 0.15rem 0.2rem 0.35rem;
-          animation: fadeIn 0.2s ease-in;
-        }
-        
-        .card { background-color: var(--bg-card); transition: background-color 0.3s ease; }
-        .rounded-4 { border-radius: 1rem !important; }
-        .shadow-sm { box-shadow: 0 10px 30px rgba(0,0,0,0.04) !important; }
-        .btn { border-radius: 0.75rem; padding: 0.6rem 1.5rem; transition: all 0.2s; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .btn-sm { padding: 0.3rem 0.8rem; }
-        .rounded-pill { border-radius: 50rem !important; }
-        
-        .form-control, .form-select { 
-          border-radius: 0.75rem; border: 1px solid var(--border-color); padding: 0.75rem 1rem; 
-          color: var(--text-main); font-weight: 500; background-color: var(--bg-input); transition: all 0.2s; 
-        }
-        .form-control:focus, .form-select:focus { border-color: #4318FF; box-shadow: 0 0 0 0.25rem rgba(67, 24, 255, 0.1); }
-        .focus-none:focus { box-shadow: none !important; border-color: transparent !important; }
-        .focus-primary:focus { border-color: #4318FF !important; box-shadow: 0 0 0 0.25rem rgba(67, 24, 255, 0.1) !important; }
-        .focus-secondary:focus { border-color: #6c757d !important; box-shadow: 0 0 0 0.25rem rgba(108, 117, 125, 0.1) !important; }
-        .focus-info:focus { border-color: #0dcaf0 !important; box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.1) !important; }
-        
-        .form-label { font-weight: 600; color: var(--text-main); margin-bottom: 0.3rem; }
-        
-        .modern-table thead th { border: none; padding-top: 1rem; padding-bottom: 1rem; color: #A3AED0; }
-        .modern-table tbody tr { border-bottom: 1px solid var(--border-color); transition: all 0.2s; }
-        .modern-table tbody tr:hover { background-color: var(--bg-hover) !important; }
-        .modern-table tbody tr:last-child { border-bottom: none; }
-        .modern-table tbody td { padding-top: 1rem; padding-bottom: 1rem; color: var(--text-main); }
-        
-        .badge.rounded-pill { padding: 0.4em 0.8em; font-weight: 600; font-size: 0.75em; border: 1px solid transparent; }
-        .bg-light-success { background-color: rgba(5, 205, 153, 0.1) !important; color: #05CD99 !important; border-color: rgba(5, 205, 153, 0.2); }
-        .bg-light-warning { background-color: rgba(255, 168, 0, 0.1) !important; color: #FFA800 !important; border-color: rgba(255, 168, 0, 0.2); }
-        .bg-light-danger { background-color: rgba(238, 93, 80, 0.1) !important; color: #EE5D50 !important; border-color: rgba(238, 93, 80, 0.2); }
-        .bg-light-info { background-color: rgba(0, 184, 217, 0.1) !important; color: #00B8D9 !important; border-color: rgba(0, 184, 217, 0.2); }
-        .bg-light-primary { background-color: rgba(67, 24, 255, 0.1) !important; color: #4318FF !important; border-color: rgba(67, 24, 255, 0.2); }
-        
-        .icon-shape { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
-        .bg-light-teal { background-color: rgba(0, 128, 128, 0.1); color: #008080; }
-        .text-teal { color: #008080; }
-        
-        .sticky-top-custom { position: sticky; top: 100px; z-index: 10; }
-        .action-btn { opacity: 0.7; transition: all 0.2s; }
-        .modern-table tbody tr:hover .action-btn { opacity: 1; transform: scale(1.1); }
-        
-        .transition-hover { transition: all 0.3s ease; }
-        .transition-hover:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important; }
-        
-        .fade-in { animation: fadeIn 0.4s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .toast-custom {
-          position: fixed; bottom: 30px; right: 30px; min-width: 280px; padding: 15px 25px; border-radius: 12px; z-index: 9999;
-          animation: slideInBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
-        }
-        @keyframes slideInBounce { 0% { transform: translateX(120%); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-
-        .dark-theme .recharts-cartesian-grid-line { stroke: #3a3f58; }
-        .dark-theme .recharts-text { fill: #A3AED0; }
-        .dark-theme input { color: #fff !important; }
-      `}</style>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
-    </div>
+    </QueryClientProvider>
   );
 }

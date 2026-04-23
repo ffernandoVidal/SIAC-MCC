@@ -7,7 +7,6 @@ export default async function handler(req, res) {
     try {
       const { catalogo, id_empresa, id_periodo, id_tipo_poliza, id_estado, pagina = 1, limite = 20 } = req.query;
 
-      // Catálogos auxiliares
       if (catalogo === 'tipos') {
         const result = await query(`SELECT id_tipo_poliza, nombre, codigo FROM scc.tipo_poliza ORDER BY nombre`);
         return res.json({ success: true, data: result.rows });
@@ -54,14 +53,19 @@ export default async function handler(req, res) {
 
   if (method === 'POST') {
     try {
-      const { id_empresa, id_tipo_poliza, id_periodo, id_usuario, fecha_poliza, concepto, renglones } = req.body;
-      // Obtener estado BORRADOR
+      await query('SET search_path TO scc, public');
+
+      const { id_empresa, id_tipo_poliza, id_periodo, fecha_poliza, concepto, renglones } = req.body;
+      
       const estRes = await query(`SELECT id_estado_poliza FROM scc.estado_poliza WHERE codigo = 'BORRADOR' LIMIT 1`);
       const idEstado = estRes.rows[0]?.id_estado_poliza || 1;
-      // Generar numero_poliza
-      const numRes = await query(`SELECT COALESCE(MAX(numero_poliza), 0) + 1 AS siguiente FROM scc.poliza WHERE id_empresa = $1`, [id_empresa]);
+
+      const userRes = await query(`SELECT id_usuario FROM scc.usuario LIMIT 1`);
+      const idUsuarioReal = userRes.rows[0]?.id_usuario;
+      
+      const numRes = await query(`SELECT COALESCE(MAX(numero_poliza::int), 0) + 1 AS siguiente FROM scc.poliza WHERE id_empresa = $1`, [id_empresa]);
       const numero = numRes.rows[0].siguiente;
-      // Calcular totales
+      
       const totalDebe = renglones.reduce((s, r) => s + (parseFloat(r.debito) || 0), 0);
       const totalHaber = renglones.reduce((s, r) => s + (parseFloat(r.credito) || 0), 0);
       const cuadrada = Math.abs(totalDebe - totalHaber) < 0.01;
@@ -69,16 +73,16 @@ export default async function handler(req, res) {
       const polizaRes = await query(
         `INSERT INTO scc.poliza (id_empresa, id_tipo_poliza, id_periodo, id_estado_poliza, id_usuario_creador, numero_poliza, fecha_poliza, concepto, total_debito, total_credito, esta_cuadrada)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-        [id_empresa, id_tipo_poliza, id_periodo, idEstado, id_usuario, numero, fecha_poliza, concepto, totalDebe, totalHaber, cuadrada]
+        [id_empresa, id_tipo_poliza, id_periodo, idEstado, idUsuarioReal, numero, fecha_poliza, concepto, totalDebe, totalHaber, cuadrada]
       );
       const poliza = polizaRes.rows[0];
 
-      // Insertar renglones
+      // ✂️ CORRECCIÓN DEFINITIVA: Le pusimos 'linea' justo como lo pide la BD
       for (const r of renglones) {
         await query(
-          `INSERT INTO scc.detalle_poliza (id_poliza, numero_linea, id_cuenta, id_tercero, concepto_detalle, debito, credito)
-           VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-          [poliza.id_poliza, r.numero_linea, r.id_cuenta, r.id_tercero || null, r.concepto_detalle || null, parseFloat(r.debito) || 0, parseFloat(r.credito) || 0]
+          `INSERT INTO scc.detalle_poliza (id_poliza, linea, id_cuenta, id_tercero, debito, credito)
+           VALUES ($1,$2,$3,$4,$5,$6)`,
+          [poliza.id_poliza, r.numero_linea, r.id_cuenta, r.id_tercero || null, parseFloat(r.debito) || 0, parseFloat(r.credito) || 0]
         );
       }
       return res.json({ success: true, data: poliza });

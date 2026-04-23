@@ -6,24 +6,28 @@ export default async function handler(req, res) {
   if (method === 'GET') {
     try {
       const { id_empresa, id_periodo, fecha_desde, fecha_hasta } = req.query;
-      const condiciones = ['p.id_empresa = $1', "ep.codigo = 'APROBADA'"];
+      
+      const condiciones = ['p.id_empresa = $1'];
       const params = [id_empresa || 1];
 
       if (id_periodo) { params.push(id_periodo); condiciones.push(`p.id_periodo = $${params.length}`); }
-      if (fecha_desde) { params.push(fecha_desde); condiciones.push(`p.fecha_poliza >= $${params.length}`); }
-      if (fecha_hasta) { params.push(fecha_hasta); condiciones.push(`p.fecha_poliza <= $${params.length}`); }
+      
+      // 🛡️ CORRECCIÓN 1: Forzamos a que compare solo FECHAS (::date) ignorando las horas
+      if (fecha_desde) { params.push(fecha_desde); condiciones.push(`p.fecha_poliza::date >= $${params.length}::date`); }
+      if (fecha_hasta) { params.push(fecha_hasta); condiciones.push(`p.fecha_poliza::date <= $${params.length}::date`); }
 
       const result = await query(
+        
         `SELECT p.fecha_poliza, p.numero_poliza, tp.nombre AS tipo_poliza,
                 dp.linea, cc.codigo_cuenta, cc.nombre_cuenta,
-                dp.descripcion, dp.debito, dp.credito
+                p.concepto AS descripcion, dp.debito, dp.credito
          FROM scc.detalle_poliza dp
          JOIN scc.poliza p ON p.id_poliza = dp.id_poliza
-         JOIN scc.tipo_poliza tp ON tp.id_tipo_poliza = p.id_tipo_poliza
-         JOIN scc.estado_poliza ep ON ep.id_estado_poliza = p.id_estado_poliza
-         JOIN scc.catalogo_cuenta cc ON cc.id_cuenta = dp.id_cuenta
+         LEFT JOIN scc.tipo_poliza tp ON tp.id_tipo_poliza = p.id_tipo_poliza
+         LEFT JOIN scc.estado_poliza ep ON ep.id_estado_poliza = p.id_estado_poliza
+         LEFT JOIN scc.catalogo_cuenta cc ON cc.id_cuenta = dp.id_cuenta
          WHERE ${condiciones.join(' AND ')}
-         ORDER BY p.fecha_poliza, p.numero_poliza, dp.linea`, params
+         ORDER BY p.fecha_poliza DESC, p.numero_poliza DESC`, params
       );
 
       return res.json({ success: true, data: result.rows });

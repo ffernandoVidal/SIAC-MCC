@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  // 🔒 CORRECCIÓN: Quitamos el código de Vite y usamos la ruta correcta de Next.js
+  baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000,
 });
@@ -15,14 +16,15 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response: si 401 limpia sesión y redirige a /login
+// Response: si 401 limpia sesión y redirige
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
-      window.location.href = '/login';
+      // Lo ajusté a '/web' porque vi en tu index.js que esa es tu ruta de salida real
+      window.location.href = '/web'; 
     }
     return Promise.reject(error);
   }

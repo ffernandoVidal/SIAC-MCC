@@ -89,10 +89,22 @@ export default function TercerosDocumentos({ idEmpresa, mostrarToast }) {
                     <option value="CLIENTE">Cliente</option><option value="PROVEEDOR">Proveedor</option><option value="EMPLEADO">Empleado</option><option value="BANCO">Banco</option><option value="GENERAL">General</option>
                   </select>
                 </div>
-                <div className="col-md-3"><label className="form-label small fw-medium text-muted">Nombre / Razón social *</label><input type="text" className="form-control" required value={nuevoTercero.nombre_razon_social} onChange={e => setNuevoTercero({ ...nuevoTercero, nombre_razon_social: e.target.value })} /></div>
-                <div className="col-md-2"><label className="form-label small fw-medium text-muted">NIT</label><input type="text" className="form-control" value={nuevoTercero.identificacion_fiscal} onChange={e => setNuevoTercero({ ...nuevoTercero, identificacion_fiscal: e.target.value })} /></div>
-                <div className="col-md-2"><label className="form-label small fw-medium text-muted">Teléfono</label><input type="text" className="form-control" value={nuevoTercero.telefono} onChange={e => setNuevoTercero({ ...nuevoTercero, telefono: e.target.value })} /></div>
-                <div className="col-md-2"><label className="form-label small fw-medium text-muted">Correo</label><input type="email" className="form-control" value={nuevoTercero.correo_electronico} onChange={e => setNuevoTercero({ ...nuevoTercero, correo_electronico: e.target.value })} /></div>
+                <div className="col-md-3">
+                  <label className="form-label small fw-medium text-muted">Nombre / Razón social *</label>
+                  <input type="text" className="form-control" required value={nuevoTercero.nombre_razon_social} onChange={e => setNuevoTercero({ ...nuevoTercero, nombre_razon_social: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s.,&]/g, '') })} />
+                </div>
+                <div className="col-md-2">
+                  <label className="form-label small fw-medium text-muted">NIT</label>
+                  <input type="text" className="form-control" value={nuevoTercero.identificacion_fiscal} onChange={e => setNuevoTercero({ ...nuevoTercero, identificacion_fiscal: e.target.value.replace(/[^0-9kK-]/g, '') })} />
+                </div>
+                <div className="col-md-2">
+                  <label className="form-label small fw-medium text-muted">Teléfono</label>
+                  <input type="text" className="form-control" value={nuevoTercero.telefono} onChange={e => setNuevoTercero({ ...nuevoTercero, telefono: e.target.value.replace(/[^0-9+\s-]/g, '') })} />
+                </div>
+                <div className="col-md-2">
+                  <label className="form-label small fw-medium text-muted">Correo</label>
+                  <input type="email" className="form-control" value={nuevoTercero.correo_electronico} onChange={e => setNuevoTercero({ ...nuevoTercero, correo_electronico: e.target.value })} />
+                </div>
                 <div className="col-md-1 d-flex align-items-end"><button type="submit" className="btn btn-primary rounded-pill w-100"><i className="bi bi-check-lg"></i></button></div>
               </form>
             </div>
@@ -142,11 +154,26 @@ export default function TercerosDocumentos({ idEmpresa, mostrarToast }) {
                     {tiposDoc.map(t => <option key={t.id_tipo_documento_fuente} value={t.id_tipo_documento_fuente}>{t.nombre}</option>)}
                   </select>
                 </div>
-                <div className="col-md-2"><label className="form-label small fw-medium text-muted">No. documento *</label><input type="text" className="form-control" required value={nuevoDoc.numero_documento} onChange={e => setNuevoDoc({ ...nuevoDoc, numero_documento: e.target.value })} /></div>
-                <div className="col-md-1"><label className="form-label small fw-medium text-muted">Serie</label><input type="text" className="form-control" value={nuevoDoc.serie_documento} onChange={e => setNuevoDoc({ ...nuevoDoc, serie_documento: e.target.value })} /></div>
-                <div className="col-md-2"><label className="form-label small fw-medium text-muted">Fecha *</label><input type="date" className="form-control" required value={nuevoDoc.fecha_documento} onChange={e => setNuevoDoc({ ...nuevoDoc, fecha_documento: e.target.value })} /></div>
-                <div className="col-md-2"><label className="form-label small fw-medium text-muted">Emisor</label><input type="text" className="form-control" value={nuevoDoc.nombre_emisor} onChange={e => setNuevoDoc({ ...nuevoDoc, nombre_emisor: e.target.value })} /></div>
-                <div className="col-md-2"><label className="form-label small fw-medium text-muted">Monto Q</label><input type="number" step="0.01" className="form-control" value={nuevoDoc.monto_total} onChange={e => setNuevoDoc({ ...nuevoDoc, monto_total: e.target.value })} /></div>
+                <div className="col-md-2">
+                  <label className="form-label small fw-medium text-muted">No. documento *</label>
+                  <input type="text" className="form-control" required value={nuevoDoc.numero_documento} onChange={e => setNuevoDoc({ ...nuevoDoc, numero_documento: e.target.value.replace(/[^0-9a-zA-Z-]/g, '') })} />
+                </div>
+                <div className="col-md-1">
+                  <label className="form-label small fw-medium text-muted">Serie</label>
+                  <input type="text" className="form-control" value={nuevoDoc.serie_documento} onChange={e => setNuevoDoc({ ...nuevoDoc, serie_documento: e.target.value.replace(/[^a-zA-Z0-9]/g, '') })} />
+                </div>
+                <div className="col-md-2">
+                  <label className="form-label small fw-medium text-muted">Fecha *</label>
+                  <input type="date" className="form-control" required value={nuevoDoc.fecha_documento} onChange={e => setNuevoDoc({ ...nuevoDoc, fecha_documento: e.target.value })} />
+                </div>
+                <div className="col-md-2">
+                  <label className="form-label small fw-medium text-muted">Emisor</label>
+                  <input type="text" className="form-control" value={nuevoDoc.nombre_emisor} onChange={e => setNuevoDoc({ ...nuevoDoc, nombre_emisor: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s.,&]/g, '') })} />
+                </div>
+                <div className="col-md-2">
+                  <label className="form-label small fw-medium text-muted">Monto Q</label>
+                  <input type="number" min="0" step="0.01" className="form-control" value={nuevoDoc.monto_total} onChange={e => setNuevoDoc({ ...nuevoDoc, monto_total: e.target.value })} />
+                </div>
                 <div className="col-md-1 d-flex align-items-end"><button type="submit" className="btn btn-primary rounded-pill w-100"><i className="bi bi-check-lg"></i></button></div>
               </form>
             </div>

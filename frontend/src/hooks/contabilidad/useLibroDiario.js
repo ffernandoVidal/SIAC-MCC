@@ -5,7 +5,7 @@ export function useLibroDiarioQuery(filtros) {
   return useQuery({
     queryKey: ['libro-diario', filtros],
     queryFn: () => libroDiarioApi.getLibroDiario(filtros).then((r) => r.data),
-    enabled: !!filtros.id_periodo,
+    // 🔓 CORRECCIÓN: Eliminamos el 'enabled' de Fer para que reaccione a las fechas y al buscador libre.
     keepPreviousData: true,
   });
 }

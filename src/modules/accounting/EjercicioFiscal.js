@@ -28,6 +28,14 @@ export default function EjercicioFiscal({ idEmpresa, mostrarToast }) {
 
   const crearEjercicio = async (e) => {
     e.preventDefault();
+
+    // 🔒 NUEVO CANDADO: Evitar crear un año fiscal que ya existe
+    const anioDuplicado = ejercicios.find(ej => ej.anio === nuevoAnio);
+    if (anioDuplicado) {
+      mostrarToast(`Error: El año fiscal ${nuevoAnio} ya está registrado.`, 'danger');
+      return; // Detiene la ejecución aquí mismo
+    }
+
     setCreando(true);
     try {
       const res = await fetch('/api/ejercicios', {
@@ -35,7 +43,11 @@ export default function EjercicioFiscal({ idEmpresa, mostrarToast }) {
         body: JSON.stringify({ id_empresa: idEmpresa, anio: nuevoAnio, fecha_inicio: `${nuevoAnio}-01-01`, fecha_fin: `${nuevoAnio}-12-31` })
       });
       const data = await res.json();
-      if (data.success) { mostrarToast('Ejercicio fiscal creado con 12 periodos'); cargarEjercicios(); setNuevoAnio(nuevoAnio + 1); }
+      if (data.success) { 
+        mostrarToast('Ejercicio fiscal creado con 12 periodos'); 
+        cargarEjercicios(); 
+        setNuevoAnio(nuevoAnio + 1); 
+      }
       else mostrarToast('Error: ' + data.error, 'danger');
     } catch { mostrarToast('Error de conexión', 'danger'); }
     setCreando(false);
@@ -44,10 +56,12 @@ export default function EjercicioFiscal({ idEmpresa, mostrarToast }) {
   const togglePeriodo = async (periodo) => {
     const nuevoEstado = periodo.estado === 'ABIERTO' ? 'CERRADO' : 'ABIERTO';
     if (!confirm(`¿${nuevoEstado === 'CERRADO' ? 'Cerrar' : 'Reabrir'} periodo "${periodo.nombre_periodo}"?`)) return;
+    
     await fetch('/api/periodos', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id_periodo: periodo.id_periodo, estado: nuevoEstado })
     });
+    
     mostrarToast(`Periodo ${nuevoEstado === 'CERRADO' ? 'cerrado' : 'reabierto'}`);
     cargarPeriodos(ejercicioSel.id_ejercicio);
   };

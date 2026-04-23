@@ -25,13 +25,28 @@ export default function CatalogoCuentas({ idEmpresa, mostrarToast }) {
 
   const guardar = async (e) => {
     e.preventDefault();
+
+    // 🔒 NUEVO CANDADO: Validación de Naturaleza vs Cuenta Padre
+    if (nueva.id_cuenta_padre) {
+      const cuentaPadreSeleccionada = cuentas.find(c => c.id_cuenta.toString() === nueva.id_cuenta_padre.toString());
+      if (cuentaPadreSeleccionada && cuentaPadreSeleccionada.naturaleza !== nueva.naturaleza) {
+        mostrarToast(`Error: La naturaleza debe ser ${cuentaPadreSeleccionada.naturaleza} igual que su cuenta padre.`, 'danger');
+        return; // Detenemos el guardado
+      }
+    }
+
     try {
       const res = await fetch('/api/cuentas', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...nueva, id_empresa: idEmpresa })
       });
       const data = await res.json();
-      if (data.success) { mostrarToast('Cuenta creada'); setMostrarForm(false); setNueva({ codigo_cuenta: '', nombre_cuenta: '', id_tipo_cuenta: '', id_cuenta_padre: '', nivel: 1, naturaleza: 'DEUDORA', acepta_movimientos: true, requiere_tercero: false, descripcion: '' }); cargarCuentas(); }
+      if (data.success) { 
+        mostrarToast('Cuenta creada'); 
+        setMostrarForm(false); 
+        setNueva({ codigo_cuenta: '', nombre_cuenta: '', id_tipo_cuenta: '', id_cuenta_padre: '', nivel: 1, naturaleza: 'DEUDORA', acepta_movimientos: true, requiere_tercero: false, descripcion: '' }); 
+        cargarCuentas(); 
+      }
       else mostrarToast('Error: ' + data.error, 'danger');
     } catch { mostrarToast('Error de conexión', 'danger'); }
   };
@@ -76,11 +91,11 @@ export default function CatalogoCuentas({ idEmpresa, mostrarToast }) {
               <div className="row g-3">
                 <div className="col-md-2">
                   <label className="form-label small fw-medium text-muted">Código *</label>
-                  <input type="text" className="form-control" value={nueva.codigo_cuenta} onChange={e => setNueva({ ...nueva, codigo_cuenta: e.target.value })} required placeholder="Ej: 1101" />
+                  <input type="text" className="form-control" value={nueva.codigo_cuenta} onChange={e => setNueva({ ...nueva, codigo_cuenta: e.target.value.replace(/[^0-9.]/g, '') })} required placeholder="Ej: 1.1.01" />
                 </div>
                 <div className="col-md-3">
                   <label className="form-label small fw-medium text-muted">Nombre *</label>
-                  <input type="text" className="form-control" value={nueva.nombre_cuenta} onChange={e => setNueva({ ...nueva, nombre_cuenta: e.target.value })} required />
+                  <input type="text" className="form-control" value={nueva.nombre_cuenta} onChange={e => setNueva({ ...nueva, nombre_cuenta: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })} required />
                 </div>
                 <div className="col-md-2">
                   <label className="form-label small fw-medium text-muted">Tipo cuenta *</label>
